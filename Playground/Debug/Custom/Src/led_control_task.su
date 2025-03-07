@@ -1,0 +1,2 @@
+../Custom/Src/led_control_task.c:16:6:create_led_control_task	24	static
+../Custom/Src/led_control_task.c:31:6:led_control_task_code	24	static,ignoring_inline_asm
