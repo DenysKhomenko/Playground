@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "led_control_task.h"
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,6 +53,7 @@ TIM_HandleTypeDef htim6;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
+volatile bool toggle_led = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,7 +110,7 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   GPIO_Init();
-  HAL_TIM_Base_Start(&htim6);
+  HAL_TIM_Base_Start_IT(&htim6);
 
   /* USER CODE END 2 */
 
@@ -341,6 +343,9 @@ static void MX_TIM6_Init(void)
   }
   /* USER CODE BEGIN TIM6_Init 2 */
 
+  HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
+  HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 0, 15);
+
   /* USER CODE END TIM6_Init 2 */
 
 }
@@ -495,8 +500,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     HAL_IncTick();
   }
-  /* USER CODE BEGIN Callback 1 */
 
+  /* USER CODE BEGIN Callback 1 */
+  else if(htim->Instance == TIM6)
+  {
+	 toggle_led = true;
+
+  }
   /* USER CODE END Callback 1 */
 }
 

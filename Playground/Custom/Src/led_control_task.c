@@ -4,6 +4,7 @@
 #include "main.h"
 #include "led_control_task.h"
 #include "cmsis_os.h"
+#include <stdbool.h>
 
 #define LED_CONTROL_TASK_STACK_SIZE 200
 #define LED_CONTROL_TASK_PRIORITY 1
@@ -11,6 +12,8 @@
 StaticTask_t xLedControlTaskBuffer;
 StackType_t xLedControlTaskStack[LED_CONTROL_TASK_STACK_SIZE];
 TaskHandle_t xLedControlTaskHandle = NULL;
+
+extern volatile bool toggle_led;
 
 void create_led_control_task(void)
 {
@@ -35,9 +38,11 @@ void led_control_task_code(void *pvParameters)
 
     for( ;; )
     {
-        while(!(TIM6 ->SR & TIM_SR_UIF));
-        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
-        TIM6 ->SR &= !TIM_SR_UIF;
+        if(toggle_led)
+        {
+        	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
+        	toggle_led = false;
+        }
     }
 
 }
