@@ -12,7 +12,6 @@ StaticTask_t xLedControlTaskBuffer;
 StackType_t xLedControlTaskStack[LED_CONTROL_TASK_STACK_SIZE];
 TaskHandle_t xLedControlTaskHandle = NULL;
 
-
 void create_led_control_task(void)
 {
 
@@ -36,8 +35,9 @@ void led_control_task_code(void *pvParameters)
 
     for( ;; )
     {
-        osDelay(1000);
-
+        while(!(TIM6 ->SR & TIM_SR_UIF));
+        HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
+        TIM6 ->SR &= !TIM_SR_UIF;
     }
 
 }
