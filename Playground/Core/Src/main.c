@@ -53,7 +53,7 @@ TIM_HandleTypeDef htim6;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-volatile bool toggle_led = false;
+extern TaskHandle_t xLedControlTaskHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,7 +110,6 @@ int main(void)
   MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
   GPIO_Init();
-  HAL_TIM_Base_Start_IT(&htim6);
 
   /* USER CODE END 2 */
 
@@ -138,6 +137,10 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   create_led_control_task();
+
+  /*Timer start should be after the creation of the task that it will try to notify, otherwise stalls.*/
+  HAL_TIM_Base_Start_IT(&htim6);
+
   /* USER CODE END RTOS_THREADS */
 
   /* Start scheduler */
@@ -344,7 +347,9 @@ static void MX_TIM6_Init(void)
   /* USER CODE BEGIN TIM6_Init 2 */
 
   HAL_NVIC_EnableIRQ(TIM6_DAC_IRQn);
-  HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 0, 15);
+
+  //Set interrupt priority, should be greater or equal to configMAX_SYSCALL_INTERRUPT_PRIORITY
+  HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 6, 6);
 
   /* USER CODE END TIM6_Init 2 */
 
@@ -504,7 +509,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 1 */
   else if(htim->Instance == TIM6)
   {
-	 toggle_led = true;
+	notify_task_from_isr((uint32_t)NOTIFY_TOGGLE_LED);
 
   }
   /* USER CODE END Callback 1 */
