@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "led_control_task.h"
+#include "debug_task.h"
 #include <stdbool.h>
 /* USER CODE END Includes */
 
@@ -53,7 +54,6 @@ TIM_HandleTypeDef htim6;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
-extern TaskHandle_t xLedControlTaskHandle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -137,7 +137,7 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   create_led_control_task();
-
+  create_debug_task();
   /*Timer start should be after the creation of the task that it will try to notify, otherwise stalls.*/
   HAL_TIM_Base_Start_IT(&htim6);
 
