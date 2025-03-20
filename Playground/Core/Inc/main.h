@@ -71,8 +71,6 @@ void Error_Handler(void);
 #define OTG_FS_PowerSwitchOn_GPIO_Port GPIOC
 #define PDM_OUT_Pin GPIO_PIN_3
 #define PDM_OUT_GPIO_Port GPIOC
-#define B1_Pin GPIO_PIN_0
-#define B1_GPIO_Port GPIOA
 #define I2S3_WS_Pin GPIO_PIN_4
 #define I2S3_WS_GPIO_Port GPIOA
 #define SPI1_SCK_Pin GPIO_PIN_5
@@ -83,6 +81,9 @@ void Error_Handler(void);
 #define SPI1_MOSI_GPIO_Port GPIOA
 #define BOOT1_Pin GPIO_PIN_2
 #define BOOT1_GPIO_Port GPIOB
+#define PUSH_BUTTON_PIN_Pin GPIO_PIN_7
+#define PUSH_BUTTON_PIN_GPIO_Port GPIOE
+#define PUSH_BUTTON_PIN_EXTI_IRQn EXTI9_5_IRQn
 #define CLK_IN_Pin GPIO_PIN_10
 #define CLK_IN_GPIO_Port GPIOB
 #define LD4_Pin GPIO_PIN_12

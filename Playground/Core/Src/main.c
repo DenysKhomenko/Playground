@@ -52,17 +52,24 @@ SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim6;
 
+UART_HandleTypeDef huart2;
+DMA_HandleTypeDef hdma_usart2_tx;
+
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
+
+extern QueueHandle_t xQueue;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM6_Init(void);
+static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
@@ -104,10 +111,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
   MX_TIM6_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   GPIO_Init();
 
@@ -140,6 +149,7 @@ int main(void)
   create_debug_task();
   /*Timer start should be after the creation of the task that it will try to notify, otherwise stalls.*/
   HAL_TIM_Base_Start_IT(&htim6);
+
 
   /* USER CODE END RTOS_THREADS */
 
@@ -327,7 +337,6 @@ static void MX_TIM6_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig = {0};
 
   /* USER CODE BEGIN TIM6_Init 1 */
-
   /* USER CODE END TIM6_Init 1 */
   htim6.Instance = TIM6;
   htim6.Init.Prescaler = 127;
@@ -352,6 +361,55 @@ static void MX_TIM6_Init(void)
   HAL_NVIC_SetPriority(TIM6_DAC_IRQn, 6, 6);
 
   /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 115200;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream6_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
 
@@ -407,17 +465,17 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI2;
   HAL_GPIO_Init(PDM_OUT_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : B1_Pin */
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pin : BOOT1_Pin */
   GPIO_InitStruct.Pin = BOOT1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(BOOT1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PUSH_BUTTON_PIN_Pin */
+  GPIO_InitStruct.Pin = PUSH_BUTTON_PIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(PUSH_BUTTON_PIN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : CLK_IN_Pin */
   GPIO_InitStruct.Pin = CLK_IN_Pin;
@@ -448,6 +506,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MEMS_INT2_GPIO_Port, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
@@ -466,6 +528,19 @@ static void GPIO_Init(void)
 	HAL_GPIO_WritePin(GPIOC, led_pin.Pin, GPIO_PIN_RESET);
 }
 
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == PUSH_BUTTON_PIN_Pin)
+	{
+		debug_print_from_isr("Hello world from ISR\r\n");
+	}
+	else
+	{
+		__NOP();
+
+	}
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -505,7 +580,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   {
     HAL_IncTick();
   }
-
   /* USER CODE BEGIN Callback 1 */
   else if(htim->Instance == TIM6)
   {
